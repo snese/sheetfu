@@ -12,12 +12,13 @@ export function formatCurrency(value: number, currency = 'TWD'): string {
 }
 
 export function formatPercent(value: number): string {
-  const sign = value >= 0 ? '+' : ''
-  return `${sign}${value.toFixed(1)}%`
+  const pct = value < 1 && value > -1 ? value * 100 : value
+  const sign = pct >= 0 ? '+' : ''
+  return `${sign}${pct.toFixed(2)}%`
 }
 
 export function formatPnl(value: number): { text: string; color: string; arrow: string } {
-  const color = value >= 0 ? 'text-green-500' : 'text-red-500'
+  const color = value >= 0 ? 'text-emerald-500' : 'text-rose-500'
   const arrow = value >= 0 ? '▲' : '▼'
   return { text: formatCurrency(value), color, arrow }
 }

@@ -3,12 +3,11 @@ import {
   SHEET_RANGES,
   type Transaction,
   type PortfolioHolding,
-  type BalanceSheetItem,
   type DashboardSummary,
 } from './schema'
 
 const cache = new Map<string, { data: string[][]; ts: number }>()
-const TTL = 5 * 60 * 1000 // 5 min
+const TTL = 5 * 60 * 1000
 
 async function getRange(range: string): Promise<string[][]> {
   const cached = cache.get(range)
@@ -21,21 +20,26 @@ async function getRange(range: string): Promise<string[][]> {
 
 export function invalidateCache() { cache.clear() }
 
+function parseTwd(s: string): number {
+  if (!s) return 0
+  return Number(String(s).replace(/[NT$,\s]/g, '')) || 0
+}
+
 export async function getTransactions(limit?: number): Promise<Transaction[]> {
   const rows = await getRange(SHEET_RANGES.transactions)
   const data = rows.map((r) => ({
     date: r[0] ?? '',
-    market: r[1] as Transaction['market'],
+    broker: r[1] ?? '',
     symbol: r[2] ?? '',
-    name: r[3] ?? '',
-    type: r[4] as Transaction['type'],
-    shares: Number(r[5]) || 0,
-    price: Number(r[6]) || 0,
-    currency: r[7] ?? '',
-    fxRate: Number(r[8]) || 0,
-    fee: Number(r[9]) || 0,
-    tax: Number(r[10]) || 0,
-    totalTwd: Number(r[11]) || 0,
+    market: (r[3] ?? 'US') as Transaction['market'],
+    assetType: r[4] ?? '',
+    type: r[5] ?? '',
+    shares: Number(r[6]) || 0,
+    price: Number(r[7]) || 0,
+    currency: r[8] ?? '',
+    totalCost: Number(r[9]) || 0,
+    fee: Number(r[10]) || 0,
+    fxRate: Number(r[11]) || 0,
     note: r[12] ?? '',
   }))
   return limit ? data.slice(-limit) : data
@@ -43,48 +47,57 @@ export async function getTransactions(limit?: number): Promise<Transaction[]> {
 
 export async function getPortfolio(): Promise<PortfolioHolding[]> {
   const rows = await getRange(SHEET_RANGES.portfolio)
-  return rows.map((r) => ({
+  return rows.filter(r => r[0] && r[0].trim()).map((r) => ({
     symbol: r[0] ?? '',
-    name: r[1] ?? '',
-    market: r[2] as PortfolioHolding['market'],
-    shares: Number(r[3]) || 0,
-    avgCost: Number(r[4]) || 0,
+    market: (r[1] ?? 'US') as PortfolioHolding['market'],
+    assetType: r[2] ?? '',
+    currency: r[3] ?? '',
+    shares: Number(r[4]) || 0,
     currentPrice: Number(r[5]) || 0,
-    currency: r[6] ?? '',
+    valueLocal: Number(r[6]) || 0,
     fxRate: Number(r[7]) || 0,
-    costTwd: Number(r[8]) || 0,
-    valueTwd: Number(r[9]) || 0,
-    pnlTwd: Number(r[10]) || 0,
-    pnlPercent: Number(r[11]) || 0,
-    weight: Number(r[12]) || 0,
-    riskLevel: Number(r[13]) || 0,
-    lastUpdate: r[14] ?? '',
-  }))
-}
-
-export async function getBalanceSheet(): Promise<BalanceSheetItem[]> {
-  const rows = await getRange(SHEET_RANGES.balanceSheet)
-  return rows.map((r) => ({
-    category: r[0] ?? '',
-    item: r[1] ?? '',
-    currency: r[2] ?? '',
-    amount: Number(r[3]) || 0,
-    amountTwd: Number(r[4]) || 0,
-    note: r[5] ?? '',
-    lastUpdate: r[6] ?? '',
+    valueTwd: Number(r[8]) || 0,
+    avgCost: Number(r[9]) || 0,
+    costTwd: Number(r[10]) || 0,
+    pnlTwd: Number(r[11]) || 0,
+    pnlPercent: Number(r[12]) || 0,
+    riskLevel: r[13] ?? '',
+    totalPortfolio: Number(r[14]) || 0,
   }))
 }
 
 export async function getDashboardSummary(): Promise<DashboardSummary> {
   const rows = await getRange(SHEET_RANGES.overview)
-  const kv = Object.fromEntries(rows.map((r) => [r[0], r[1]]))
+  // Parse grouped table: find key-value pairs, skip emoji headers and empty rows
+  const kv: Record<string, string> = {}
+  const marketDist: { market: string; valueTwd: number }[] = []
+  let section = ''
+
+  for (const r of rows) {
+    const key = (r[0] ?? '').trim()
+    const val = (r[1] ?? '').trim()
+    if (!key) continue
+    // Detect section headers (emoji prefixed or header rows)
+    if (key.match(/^[📊💰🌍]/) || key === '項目') {
+      if (key.includes('市場分布')) section = 'market'
+      else if (key.includes('資產組成')) section = 'asset'
+      else section = 'summary'
+      continue
+    }
+    if (section === 'market' && key !== '市值(台幣)') {
+      marketDist.push({ market: key, valueTwd: parseTwd(val) })
+    } else {
+      kv[key] = val
+    }
+  }
+
   return {
-    netWorth: Number(kv['淨值'] ?? kv['Net Worth']) || 0,
-    totalInvestment: Number(kv['投資市值'] ?? kv['Total Investment']) || 0,
-    totalCost: Number(kv['投資成本'] ?? kv['Total Cost']) || 0,
-    totalPnl: Number(kv['未實現損益'] ?? kv['Total P&L']) || 0,
-    returnPercent: Number(kv['報酬率'] ?? kv['Return %']) || 0,
-    riskScore: Number(kv['風險分數'] ?? kv['Risk Score']) || 0,
-    baseCurrency: kv['基礎貨幣'] ?? kv['Base Currency'] ?? 'TWD',
+    netWorth: parseTwd(kv['家庭總淨值'] ?? '0'),
+    totalAssets: parseTwd(kv['總資產'] ?? '0'),
+    totalLiabilities: parseTwd(kv['總負債'] ?? '0'),
+    cash: parseTwd(kv['現金'] ?? '0'),
+    investment: parseTwd(kv['投資'] ?? '0'),
+    realEstate: parseTwd(kv['不動產'] ?? '0'),
+    marketDistribution: marketDist,
   }
 }

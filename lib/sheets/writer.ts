@@ -1,5 +1,5 @@
 import { sheets, SHEET_ID } from './client'
-import { SHEET_TABS, type Transaction } from './schema'
+import { SHEET_TABS } from './schema'
 import { TransactionInput } from './validation'
 import { ApiError } from '@/lib/api-error'
 
@@ -11,23 +11,25 @@ export async function addTransaction(raw: unknown): Promise<{ row: number }> {
   }
   const input = parsed.data
 
-  const market: Transaction['market'] = /^\d/.test(input.symbol) ? 'TW' : 'US'
+  const market = /^\d/.test(input.symbol) ? 'TW' : 'US'
   const currency = market === 'TW' ? 'TWD' : 'USD'
+  const assetType = input.assetType ?? (market === 'TW' ? '個股' : '個股')
   const fee = input.fee ?? (market === 'TW' ? (input.price ?? 0) * input.shares * 0.001425 : 0)
+  const typeMap: Record<string, string> = { buy: '買入', sell: '賣出', dividend: '股利' }
 
   const row = [
     input.date,
-    market,
+    input.broker ?? '',
     input.symbol,
-    '',  // name — Sheet formula fills
-    input.type,
+    market,
+    assetType,
+    typeMap[input.type] ?? input.type,
     input.shares,
     input.price ?? '',
     currency,
-    '',  // fxRate — Sheet formula
+    '',  // totalCost — Sheet formula
     Math.round(fee * 100) / 100,
-    '',  // tax — Sheet formula
-    '',  // totalTwd — Sheet formula
+    '',  // fxRate — Sheet formula
     input.note ?? '',
   ]
 

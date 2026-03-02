@@ -7,6 +7,8 @@ export const TransactionInput = z.object({
   shares: z.number().positive('Shares must be positive'),
   price: z.number().nonnegative().optional(),
   fee: z.number().nonnegative().optional(),
+  broker: z.string().max(50).optional(),
+  assetType: z.string().max(20).optional(),
   note: z.string().max(200).optional(),
 })
 
