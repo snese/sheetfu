@@ -71,7 +71,7 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
     const key = (r[0] ?? '').trim()
     const val = (r[1] ?? '').trim()
     if (!key) continue
-    if (key.match(/[\u{1F300}-\u{1FAFF}]/u) || key === '項目') {
+    if (key.match(/[\u{2600}-\u{2BFF}\u{1F300}-\u{1FAFF}]/u) || key === '項目') {
       if (key.includes('市場分布')) section = 'market'
       else if (key.includes('風險分布')) section = 'risk'
       else if (key.includes('資產組成')) section = 'asset'
@@ -105,9 +105,9 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
 
 export async function getBalanceSheet(): Promise<BalanceSheetItem[]> {
   const rows = await getRange(SHEET_RANGES.balanceSheet)
-  return rows.slice(1) // skip header
-    .filter(r => r[0] && !['\u8cc7\u7522', '\u8ca0\u50b5'].includes(r[0]) && !r[0].includes('\u7e3d'))
-    .filter(r => r[1]) // must have subCategory
+  return rows.slice(1)
+    .filter(r => r[0] && !['資產', '負債'].includes(r[0]) && !r[0].includes('總'))
+    .filter(r => r[1])
     .map(r => ({
       category: r[0] ?? '', subCategory: r[1] ?? '', description: r[2] ?? '',
       currency: r[3] ?? 'TWD', amountLocal: Number(r[4]) || 0,
