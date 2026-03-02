@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { cn } from '@/lib/utils'
 import { queueTransaction } from '@/lib/offline-queue'
 
@@ -9,7 +9,8 @@ const TYPES = [
   { value: 'dividend', label: '股利', color: 'bg-accent/10 text-accent border-accent/30' },
 ] as const
 
-const BROKERS = ['Firstrade', '元大', '國泰', '富邦', '凱基', 'Interactive Brokers', ''] as const
+const BROKERS = ['Firstrade', '元大', '國泰', '富邦', '富邦證券', '凱基', 'Interactive Brokers'] as const
+const QUICK_SYMBOLS = ['TSLA', 'AMZN', 'NVDA', 'VTI', '0050', '00675L', '00631L', '006208'] as const
 
 export default function AddPage() {
   const [form, setForm] = useState({
@@ -19,8 +20,28 @@ export default function AddPage() {
   })
   const [status, setStatus] = useState<'idle' | 'saving' | 'ok' | 'error'>('idle')
   const [msg, setMsg] = useState('')
+  const [recentSymbols, setRecentSymbols] = useState<string[]>([])
+
+  useEffect(() => {
+    try {
+      const stored = JSON.parse(localStorage.getItem('sheetfu_recent') ?? '[]')
+      setRecentSymbols(stored)
+    } catch { /* ignore */ }
+  }, [])
 
   const set = (k: string, v: string) => setForm((f) => ({ ...f, [k]: v }))
+
+  const pickSymbol = (s: string) => {
+    set('symbol', s)
+    // Auto-detect market
+    if (/^\d/.test(s)) {
+      set('broker', '富邦證券')
+      set('assetType', s.startsWith('00') ? 'ETF' : '個股')
+    } else {
+      set('broker', 'Firstrade')
+      set('assetType', ['VTI','VEA','VWO','VOO','VT','TLT','BNDW'].includes(s) ? 'ETF' : '個股')
+    }
+  }
 
   async function submit(e: React.FormEvent) {
     e.preventDefault()
@@ -40,6 +61,10 @@ export default function AddPage() {
       if (!res.ok) throw new Error(data.error)
       setStatus('ok')
       setMsg(`已新增至第 ${data.row} 列`)
+      // Save to recent
+      const updated = [form.symbol, ...recentSymbols.filter(s => s !== form.symbol)].slice(0, 5)
+      setRecentSymbols(updated)
+      localStorage.setItem('sheetfu_recent', JSON.stringify(updated))
       setForm((f) => ({ ...f, symbol: '', shares: '', price: '', fee: '', note: '' }))
     } catch (err: unknown) {
       if (!navigator.onLine) {
@@ -55,6 +80,7 @@ export default function AddPage() {
   }
 
   const inputCls = 'w-full rounded-xl border border-border bg-card px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-colors'
+  const allQuick = [...new Set([...recentSymbols, ...QUICK_SYMBOLS])].slice(0, 8)
 
   return (
     <div className="max-w-md mx-auto space-y-5">
@@ -70,12 +96,25 @@ export default function AddPage() {
           ))}
         </div>
 
+        {/* Quick Symbol Picker */}
+        <div>
+          <p className="text-[10px] text-muted-foreground mb-1.5">快速選擇</p>
+          <div className="flex flex-wrap gap-1.5">
+            {allQuick.map(s => (
+              <button key={s} type="button" onClick={() => pickSymbol(s)}
+                className={cn('px-2.5 py-1 rounded-lg text-xs font-medium transition-all',
+                  form.symbol === s ? 'bg-accent text-accent-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/80')}>
+                {s}
+              </button>
+            ))}
+          </div>
+        </div>
+
         <input type="date" value={form.date} onChange={(e) => set('date', e.target.value)} required className={inputCls} />
 
-        {/* Broker + Asset Type */}
         <div className="grid grid-cols-2 gap-3">
           <select value={form.broker} onChange={(e) => set('broker', e.target.value)} className={inputCls}>
-            {BROKERS.map(b => <option key={b} value={b}>{b || '其他'}</option>)}
+            {BROKERS.map(b => <option key={b} value={b}>{b}</option>)}
           </select>
           <select value={form.assetType} onChange={(e) => set('assetType', e.target.value)} className={inputCls}>
             <option value="個股">個股</option>
@@ -84,7 +123,8 @@ export default function AddPage() {
           </select>
         </div>
 
-        <input placeholder="股票代號 e.g. AAPL / 2330" value={form.symbol} onChange={(e) => set('symbol', e.target.value.toUpperCase())} required className={inputCls} />
+        <input placeholder="股票代號 e.g. AAPL / 2330" value={form.symbol}
+          onChange={(e) => set('symbol', e.target.value.toUpperCase())} required className={inputCls} />
 
         <div className="grid grid-cols-2 gap-3">
           <input type="number" placeholder="股數" value={form.shares} onChange={(e) => set('shares', e.target.value)} required min="0" step="any" className={inputCls} />
@@ -92,7 +132,6 @@ export default function AddPage() {
         </div>
 
         <input type="number" placeholder="手續費 (選填，台股自動算)" value={form.fee} onChange={(e) => set('fee', e.target.value)} min="0" step="any" className={inputCls} />
-
         <input placeholder="備註 (選填)" value={form.note} onChange={(e) => set('note', e.target.value)} className={inputCls} />
 
         <button type="submit" disabled={status === 'saving'}
@@ -100,9 +139,7 @@ export default function AddPage() {
           {status === 'saving' ? '儲存中...' : '送出'}
         </button>
 
-        {msg && (
-          <p className={cn('text-sm text-center font-medium', status === 'ok' ? 'text-profit' : 'text-loss')}>{msg}</p>
-        )}
+        {msg && <p className={cn('text-sm text-center font-medium', status === 'ok' ? 'text-profit' : 'text-loss')}>{msg}</p>}
       </form>
     </div>
   )
