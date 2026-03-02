@@ -1,5 +1,6 @@
 import { formatCurrency, formatPercent, formatPnl } from '@/lib/utils'
 import { getDashboardSummary, getPortfolio, getTransactions } from '@/lib/sheets/reader'
+import { RefreshButton } from '@/components/RefreshButton'
 import type { DashboardSummary, PortfolioHolding, Transaction } from '@/lib/sheets/schema'
 
 export const dynamic = 'force-dynamic'
@@ -29,6 +30,10 @@ export default async function Home() {
 
   return (
     <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div />
+        <RefreshButton />
+      </div>
       <div className="rounded-xl border border-border bg-card p-6">
         <p className="text-sm text-muted-foreground">淨值 Net Worth</p>
         <p className="text-3xl font-bold mt-1">{formatCurrency(d.netWorth)}</p>

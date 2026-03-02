@@ -1,19 +1,15 @@
 import { sheets, SHEET_ID } from './client'
 import { SHEET_TABS, type Transaction } from './schema'
+import { TransactionInput } from './validation'
+import { ApiError } from '@/lib/api-error'
 
-interface AddTransactionInput {
-  date: string
-  symbol: string
-  type: Transaction['type']
-  shares: number
-  price?: number
-  fee?: number
-  note?: string
-}
-
-export async function addTransaction(input: AddTransactionInput): Promise<{ row: number }> {
-  if (!input.date || !input.symbol || !input.type) throw new Error('Missing required fields')
-  if (input.shares <= 0) throw new Error('Shares must be positive')
+export async function addTransaction(raw: unknown): Promise<{ row: number }> {
+  const parsed = TransactionInput.safeParse(raw)
+  if (!parsed.success) {
+    const msg = parsed.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join('; ')
+    throw new ApiError(msg, 'VALIDATION', 400)
+  }
+  const input = parsed.data
 
   const market: Transaction['market'] = /^\d/.test(input.symbol) ? 'TW' : 'US'
   const currency = market === 'TW' ? 'TWD' : 'USD'
@@ -26,7 +22,7 @@ export async function addTransaction(input: AddTransactionInput): Promise<{ row:
     '',  // name — Sheet formula fills
     input.type,
     input.shares,
-    input.price ?? '',  // leave blank for GOOGLEFINANCE
+    input.price ?? '',
     currency,
     '',  // fxRate — Sheet formula
     Math.round(fee * 100) / 100,
@@ -48,6 +44,7 @@ export async function addTransaction(input: AddTransactionInput): Promise<{ row:
 }
 
 export async function deleteRow(row: number): Promise<void> {
+  if (!row || row < 2) throw new ApiError('Invalid row number', 'VALIDATION', 400)
   const sheetId = await getSheetGid(SHEET_TABS.transactions)
   await sheets.spreadsheets.batchUpdate({
     spreadsheetId: SHEET_ID,
