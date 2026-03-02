@@ -1,6 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
+import { queueTransaction } from '@/lib/offline-queue'
 
 const TYPES = [
   { value: 'buy', label: '買入', color: 'bg-green-500/10 text-green-600 border-green-500/30' },
@@ -35,6 +36,13 @@ export default function AddPage() {
       setMsg(`已新增至第 ${data.row} 列`)
       setForm((f) => ({ ...f, symbol: '', shares: '', price: '', fee: '', note: '' }))
     } catch (err: unknown) {
+      if (!navigator.onLine) {
+        await queueTransaction({ ...form, shares: Number(form.shares), price: form.price ? Number(form.price) : undefined, fee: form.fee ? Number(form.fee) : undefined })
+        setStatus('ok')
+        setMsg('已暫存，恢復連線後自動同步')
+        setForm((f) => ({ ...f, symbol: '', shares: '', price: '', fee: '', note: '' }))
+        return
+      }
       setStatus('error')
       setMsg(err instanceof Error ? err.message : '儲存失敗')
     }
