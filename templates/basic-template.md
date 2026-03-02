@@ -2,10 +2,10 @@
 
 ## 一鍵複製
 
-> ⚠️ Template Sheet ID 待填入後更新此連結
+> 👉 [一鍵複製 Template](https://docs.google.com/spreadsheets/d/1mhyRhg0tdiNKGIXblZqlO-ppId9yVqY3wgnDZEszCjA/copy)
 
 ```
-https://docs.google.com/spreadsheets/d/{TEMPLATE_SHEET_ID}/copy
+https://docs.google.com/spreadsheets/d/1mhyRhg0tdiNKGIXblZqlO-ppId9yVqY3wgnDZEszCjA/copy
 ```
 
 ## Tab 結構
