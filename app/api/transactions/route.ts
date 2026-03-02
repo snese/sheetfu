@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
-import { getTransactions } from '@/lib/sheets/reader'
+import { revalidatePath } from 'next/cache'
+import { getTransactions, invalidateCache } from '@/lib/sheets/reader'
 import { addTransaction, deleteRow } from '@/lib/sheets/writer'
 import { getSnapshot } from '@/lib/sheets/cache'
 import type { Transaction } from '@/lib/sheets/schema'
@@ -28,6 +29,9 @@ export async function POST(request: Request) {
   try {
     const body = await request.json()
     const result = await addTransaction(body)
+    invalidateCache()
+    revalidatePath('/')
+    revalidatePath('/portfolio')
     return NextResponse.json({ success: true, ...result })
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : 'Unknown error'
@@ -40,6 +44,9 @@ export async function DELETE(request: Request) {
     const { row } = await request.json()
     if (!row || row < 2) return NextResponse.json({ error: 'Invalid row' }, { status: 400 })
     await deleteRow(row)
+    invalidateCache()
+    revalidatePath('/')
+    revalidatePath('/portfolio')
     return NextResponse.json({ success: true })
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : 'Unknown error'

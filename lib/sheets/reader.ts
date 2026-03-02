@@ -7,13 +7,19 @@ import {
   type DashboardSummary,
 } from './schema'
 
+const cache = new Map<string, { data: string[][]; ts: number }>()
+const TTL = 5 * 60 * 1000 // 5 min
+
 async function getRange(range: string): Promise<string[][]> {
-  const res = await sheets.spreadsheets.values.get({
-    spreadsheetId: SHEET_ID,
-    range,
-  })
-  return (res.data.values as string[][]) ?? []
+  const cached = cache.get(range)
+  if (cached && Date.now() - cached.ts < TTL) return cached.data
+  const res = await sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range })
+  const data = (res.data.values as string[][]) ?? []
+  cache.set(range, { data, ts: Date.now() })
+  return data
 }
+
+export function invalidateCache() { cache.clear() }
 
 export async function getTransactions(limit?: number): Promise<Transaction[]> {
   const rows = await getRange(SHEET_RANGES.transactions)
