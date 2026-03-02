@@ -1,15 +1,14 @@
 import { writeFileSync } from 'fs'
 import path from 'path'
-import { getTransactions, getPortfolio, getBalanceSheet, getDashboardSummary } from '../lib/sheets/reader'
+import { getTransactions, getPortfolio, getDashboardSummary } from '../lib/sheets/reader'
 
 async function main() {
-  const [transactions, portfolio, balance, dashboard] = await Promise.all([
+  const [transactions, portfolio, dashboard] = await Promise.all([
     getTransactions(),
     getPortfolio(),
-    getBalanceSheet(),
     getDashboardSummary(),
   ])
-  const snapshot = { transactions, portfolio, balance, dashboard, updatedAt: new Date().toISOString() }
+  const snapshot = { transactions, portfolio, dashboard, updatedAt: new Date().toISOString() }
   writeFileSync(path.join(process.cwd(), 'public', 'snapshot.json'), JSON.stringify(snapshot, null, 2))
   console.log(`Snapshot written at ${snapshot.updatedAt}`)
 }
