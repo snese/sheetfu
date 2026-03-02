@@ -32,6 +32,18 @@ export interface PortfolioHolding {
   totalPortfolio: number
 }
 
+export interface RiskBucket {
+  level: string
+  valueTwd: number
+}
+
+export interface InvestmentPerformance {
+  totalValue: number
+  totalCost: number
+  totalPnl: number
+  returnPercent: number
+}
+
 export interface DashboardSummary {
   netWorth: number
   totalAssets: number
@@ -40,16 +52,58 @@ export interface DashboardSummary {
   investment: number
   realEstate: number
   marketDistribution: { market: string; valueTwd: number }[]
+  riskDistribution: RiskBucket[]
+  riskScore: number
+  performance: InvestmentPerformance
+}
+
+export interface BalanceSheetItem {
+  category: string
+  subCategory: string
+  description: string
+  currency: string
+  amountLocal: number
+  amountTwd: number
+  lastUpdate: string
+  note: string
+}
+
+export interface HistoryPoint {
+  date: string
+  totalAssets: number
+  totalLiabilities: number
+  netWorth: number
+}
+
+export interface InsurancePolicy {
+  insured: string
+  company: string
+  policyName: string
+  coverage: string
+  amount: string
+  annualPremium: number
+  cycle: string
+  paymentMethod: string
+  startDate: string
+  endDate: string
+  nextPayment: string
+  note: string
 }
 
 export const SHEET_TABS = {
   transactions: 'v2_交易紀錄',
   portfolio: 'v2_投資組合',
   overview: 'v2_總覽',
+  balanceSheet: 'v2_資產負債表',
+  history: '歷史紀錄 (History)',
+  insurance: 'v2_保單管理',
 } as const
 
 export const SHEET_RANGES = {
   transactions: 'v2_交易紀錄!A2:M',
   portfolio: 'v2_投資組合!A2:O',
-  overview: 'v2_總覽!A1:B20',
+  overview: 'v2_總覽!A1:B33',
+  balanceSheet: 'v2_資產負債表!A1:H15',
+  history: '歷史紀錄 (History)!A1:D',
+  insurance: 'v2_保單管理!A2:L',
 } as const
