@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { getTransactions } from '@/lib/sheets/reader'
+import { addTransaction, deleteRow } from '@/lib/sheets/writer'
 import { getSnapshot } from '@/lib/sheets/cache'
 import type { Transaction } from '@/lib/sheets/schema'
 
@@ -20,5 +21,28 @@ export async function GET(request: Request) {
     } catch {
       return NextResponse.json({ error: 'No data available' }, { status: 503 })
     }
+  }
+}
+
+export async function POST(request: Request) {
+  try {
+    const body = await request.json()
+    const result = await addTransaction(body)
+    return NextResponse.json({ success: true, ...result })
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : 'Unknown error'
+    return NextResponse.json({ error: msg }, { status: 400 })
+  }
+}
+
+export async function DELETE(request: Request) {
+  try {
+    const { row } = await request.json()
+    if (!row || row < 2) return NextResponse.json({ error: 'Invalid row' }, { status: 400 })
+    await deleteRow(row)
+    return NextResponse.json({ success: true })
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : 'Unknown error'
+    return NextResponse.json({ error: msg }, { status: 400 })
   }
 }
