@@ -4,33 +4,35 @@ import dynamic from 'next/dynamic'
 import { CountUp } from '@/components/charts/CountUp'
 import { FadeIn, StaggerContainer, StaggerItem } from '@/components/charts/Animate'
 import { formatCurrency, formatPercent, formatPnl } from '@/lib/utils'
-import type { DashboardSummary, PortfolioHolding, Transaction, HistoryPoint } from '@/lib/sheets/schema'
+import type { DashboardSummary, PortfolioHolding, Transaction, HistoryPoint, Mortgage } from '@/lib/sheets/schema'
 
 const MiniPie = dynamic(() => import('@/components/charts/MiniPie').then(m => ({ default: m.MiniPie })), { ssr: false })
-const RiskBar = dynamic(() => import('@/components/charts/RiskBar').then(m => ({ default: m.RiskBar })), { ssr: false })
 const NetWorthLine = dynamic(() => import('@/components/charts/NetWorthLine').then(m => ({ default: m.NetWorthLine })), { ssr: false })
 
 function SectionLink({ href, label }: { href: string; label: string }) {
   return (
     <Link href={href} className="flex items-center justify-between mb-2 group">
       <p className="text-xs font-medium text-muted-foreground">{label}</p>
-      <span className="text-xs text-muted-foreground group-hover:text-accent transition-colors">→</span>
+      <span className="text-[10px] text-muted-foreground group-hover:text-accent transition-colors">查看 →</span>
     </Link>
   )
 }
 
-export function DashboardClient({ d, topHoldings, recentTx, history }: {
+export function DashboardClient({ d, topHoldings, recentTx, history, mortgages }: {
   d: DashboardSummary
   topHoldings: PortfolioHolding[]
   recentTx: Transaction[]
   history: HistoryPoint[]
+  mortgages: Mortgage[]
 }) {
   const pnl = formatPnl(d.performance.totalPnl)
   const assetPieData = [
+    ...(d.realEstate > 0 ? [{ name: '不動產', value: d.realEstate }] : []),
     { name: '投資', value: d.investment },
     { name: '現金', value: d.cash },
-    ...(d.realEstate > 0 ? [{ name: '不動產', value: d.realEstate }] : []),
   ]
+  const totalMortgageRemaining = mortgages.reduce((s, m) => s + m.remainingPrincipal, 0)
+  const totalMortgageMonthly = mortgages.reduce((s, m) => s + m.monthlyPayment, 0)
 
   return (
     <StaggerContainer className="space-y-5">
@@ -41,61 +43,66 @@ export function DashboardClient({ d, topHoldings, recentTx, history }: {
           <p className="text-3xl font-bold tracking-tight mt-1">
             <CountUp value={d.netWorth} prefix="NT$" />
           </p>
-          <p className={`text-sm mt-1.5 font-medium ${pnl.color}`}>
-            {pnl.arrow} {pnl.text} ({formatPercent(d.performance.returnPercent / 100)})
-          </p>
-          <div className="flex gap-4 mt-3 text-xs text-muted-foreground">
-            <span>總成本 {formatCurrency(d.performance.totalCost)}</span>
-            <span>風險分數 {d.riskScore.toFixed(1)}</span>
+          <div className="flex gap-4 mt-2 text-xs text-muted-foreground">
+            <span>資產 {formatCurrency(d.totalAssets)}</span>
+            <span>負債 {formatCurrency(d.totalLiabilities)}</span>
           </div>
+          <p className={`text-sm mt-2 font-medium ${pnl.color}`}>
+            投資損益 {pnl.arrow} {pnl.text} ({formatPercent(d.performance.returnPercent / 100)})
+          </p>
         </div>
       </StaggerItem>
 
-      {/* Charts Row: Asset Pie + Risk Bar */}
-      <div className="grid grid-cols-2 gap-3">
-        <StaggerItem>
-          <div className="rounded-xl border border-border bg-card p-4">
-            <SectionLink href="/assets" label="資產組成" />
-            <MiniPie data={assetPieData} />
-            <div className="flex justify-center gap-3 text-[10px] text-muted-foreground mt-1">
-              {assetPieData.map(i => (
-                <span key={i.name} className="flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full" style={{ background: i.name === '投資' ? 'hsl(220,70%,60%)' : i.name === '現金' ? 'hsl(152,55%,50%)' : 'hsl(38,85%,55%)' }} />
-                  {i.name}
-                </span>
-              ))}
-            </div>
-          </div>
-        </StaggerItem>
-        <StaggerItem>
-          <div className="rounded-xl border border-border bg-card p-4">
-            <SectionLink href="/portfolio" label="風險分布" />
-            {d.riskDistribution.length > 0
-              ? <RiskBar data={d.riskDistribution} />
-              : <p className="text-xs text-muted-foreground text-center py-8">無資料</p>}
-          </div>
-        </StaggerItem>
-      </div>
-
-      {/* Market Distribution */}
+      {/* Asset Composition */}
       <StaggerItem>
         <div className="rounded-xl border border-border bg-card p-4">
-          <SectionLink href="/portfolio" label="市場分布" />
-          <div className="space-y-2.5">
-            {d.marketDistribution.map(m => (
-              <div key={m.market}>
-                <div className="flex justify-between text-xs mb-1">
-                  <span className="text-muted-foreground">{m.market === 'US' ? '🇺🇸 美股' : m.market === 'TW' ? '🇹🇼 台股' : m.market}</span>
-                  <span className="font-medium">{formatCurrency(m.valueTwd)}</span>
-                </div>
-                <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-                  <div className="h-full rounded-full bg-accent transition-all duration-700" style={{ width: `${Math.min((m.valueTwd / d.investment) * 100, 100)}%` }} />
-                </div>
-              </div>
+          <SectionLink href="/assets" label="資產組成" />
+          <MiniPie data={assetPieData} />
+          <div className="flex justify-center gap-3 text-[10px] text-muted-foreground mt-1">
+            {assetPieData.map(i => (
+              <span key={i.name} className="flex items-center gap-1">
+                <span className="w-2 h-2 rounded-full" style={{ background: i.name === '不動產' ? 'hsl(38,85%,55%)' : i.name === '投資' ? 'hsl(220,70%,60%)' : 'hsl(152,55%,50%)' }} />
+                {i.name} {((i.value / d.totalAssets) * 100).toFixed(0)}%
+              </span>
             ))}
           </div>
         </div>
       </StaggerItem>
+
+      {/* Mortgage Summary */}
+      {mortgages.length > 0 && (
+        <StaggerItem>
+          <div className="rounded-xl border border-border bg-card p-4">
+            <SectionLink href="/assets" label="房貸概況" />
+            <div className="space-y-3">
+              {mortgages.map((m) => {
+                const paidPct = m.principal > 0 ? (m.paidPrincipal / m.principal) * 100 : 0
+                return (
+                  <div key={m.name}>
+                    <div className="flex justify-between text-sm mb-1">
+                      <span className="font-medium">{m.name}</span>
+                      <span className="text-muted-foreground">{formatCurrency(m.remainingPrincipal)}</span>
+                    </div>
+                    <div className="h-2 rounded-full bg-muted overflow-hidden">
+                      <div className="h-full rounded-full bg-accent transition-all duration-700" style={{ width: `${paidPct}%` }} />
+                    </div>
+                    <div className="flex justify-between text-[10px] text-muted-foreground mt-1">
+                      <span>已還 {paidPct.toFixed(1)}%</span>
+                      <span>月付 {formatCurrency(m.monthlyPayment)}</span>
+                    </div>
+                  </div>
+                )
+              })}
+              {mortgages.length > 1 && (
+                <div className="pt-2 border-t border-border flex justify-between text-xs">
+                  <span className="text-muted-foreground">合計月付</span>
+                  <span className="font-medium">{formatCurrency(totalMortgageMonthly)}</span>
+                </div>
+              )}
+            </div>
+          </div>
+        </StaggerItem>
+      )}
 
       {/* Net Worth Trend */}
       <StaggerItem>
