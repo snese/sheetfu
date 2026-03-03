@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import './globals.css'
 import { MobileNav } from '@/components/layout/MobileNav'
+import { AppHeader } from '@/components/layout/AppHeader'
 import { ThemeProvider } from '@/components/layout/ThemeProvider'
 import { StaleIndicator } from '@/components/layout/StaleIndicator'
 import { ServiceWorkerRegister } from '@/components/layout/ServiceWorkerRegister'
@@ -18,6 +19,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="pb-16 md:pb-0">
         <ThemeProvider>
           <StaleIndicator />
+          <AppHeader />
           <main className="mx-auto max-w-5xl px-4 py-6">{children}</main>
           <MobileNav />
         </ThemeProvider>
