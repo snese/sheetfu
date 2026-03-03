@@ -1,6 +1,7 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { cn } from '@/lib/utils'
+import { PageHeader } from '@/components/layout/PageHeader'
 import { queueTransaction } from '@/lib/offline-queue'
 
 const TYPES = [
@@ -11,67 +12,80 @@ const TYPES = [
 
 const BROKERS = ['Firstrade', '元大', '國泰', '富邦', '富邦證券', '凱基', 'Interactive Brokers'] as const
 const QUICK_SYMBOLS = ['TSLA', 'AMZN', 'NVDA', 'VTI', '0050', '00675L', '00631L', '006208'] as const
+const ETF_LIST = ['VTI', 'VEA', 'VWO', 'VOO', 'VT', 'TLT', 'BNDW']
+
+function inferDefaults(symbol: string) {
+  const isTw = /^\d/.test(symbol)
+  return {
+    broker: isTw ? '富邦證券' : 'Firstrade',
+    assetType: isTw ? (symbol.startsWith('00') ? 'ETF' : '個股') : (ETF_LIST.includes(symbol) ? 'ETF' : '個股'),
+  }
+}
+
+type RecentTx = { date: string; symbol: string; type: string; shares: number }
 
 export default function AddPage() {
-  const [form, setForm] = useState({
-    date: new Date().toISOString().slice(0, 10),
-    symbol: '', type: 'buy' as string, shares: '', price: '', fee: '', note: '',
-    broker: 'Firstrade', assetType: '個股',
-  })
+  const [symbol, setSymbol] = useState('')
+  const [type, setType] = useState('buy')
+  const [shares, setShares] = useState('')
+  const [expanded, setExpanded] = useState(false)
+  const [date, setDate] = useState(new Date().toISOString().slice(0, 10))
+  const [broker, setBroker] = useState('Firstrade')
+  const [assetType, setAssetType] = useState('個股')
+  const [price, setPrice] = useState('')
+  const [fee, setFee] = useState('')
+  const [note, setNote] = useState('')
   const [status, setStatus] = useState<'idle' | 'saving' | 'ok' | 'error'>('idle')
   const [msg, setMsg] = useState('')
   const [recentSymbols, setRecentSymbols] = useState<string[]>([])
+  const [recentTx, setRecentTx] = useState<RecentTx[]>([])
+  const sharesRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
-    try {
-      const stored = JSON.parse(localStorage.getItem('sheetfu_recent') ?? '[]')
-      setRecentSymbols(stored)
-    } catch { /* ignore */ }
+    try { setRecentSymbols(JSON.parse(localStorage.getItem('sheetfu_recent') ?? '[]')) } catch {}
+    fetch('/api/transactions?limit=5').then(r => r.json()).then(j => setRecentTx(j.data ?? [])).catch(() => {})
   }, [])
 
-  const set = (k: string, v: string) => setForm((f) => ({ ...f, [k]: v }))
-
   const pickSymbol = (s: string) => {
-    set('symbol', s)
-    // Auto-detect market
-    if (/^\d/.test(s)) {
-      set('broker', '富邦證券')
-      set('assetType', s.startsWith('00') ? 'ETF' : '個股')
-    } else {
-      set('broker', 'Firstrade')
-      set('assetType', ['VTI','VEA','VWO','VOO','VT','TLT','BNDW'].includes(s) ? 'ETF' : '個股')
-    }
+    setSymbol(s)
+    const d = inferDefaults(s)
+    setBroker(d.broker)
+    setAssetType(d.assetType)
+    setTimeout(() => sharesRef.current?.focus(), 50)
   }
 
   async function submit(e: React.FormEvent) {
     e.preventDefault()
     setStatus('saving')
+    const inferred = inferDefaults(symbol)
+    const payload = {
+      date, symbol, type, shares: Number(shares),
+      broker: expanded ? broker : inferred.broker,
+      assetType: expanded ? assetType : inferred.assetType,
+      price: price ? Number(price) : undefined,
+      fee: fee ? Number(fee) : undefined,
+      note,
+    }
     try {
       const res = await fetch('/api/transactions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...form,
-          shares: Number(form.shares),
-          price: form.price ? Number(form.price) : undefined,
-          fee: form.fee ? Number(form.fee) : undefined,
-        }),
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
       setStatus('ok')
       setMsg(`已新增至第 ${data.row} 列`)
-      // Save to recent
-      const updated = [form.symbol, ...recentSymbols.filter(s => s !== form.symbol)].slice(0, 5)
+      const updated = [symbol, ...recentSymbols.filter(s => s !== symbol)].slice(0, 5)
       setRecentSymbols(updated)
       localStorage.setItem('sheetfu_recent', JSON.stringify(updated))
-      setForm((f) => ({ ...f, symbol: '', shares: '', price: '', fee: '', note: '' }))
+      setRecentTx(prev => [{ date, symbol, type, shares: Number(shares) }, ...prev].slice(0, 5))
+      setSymbol(''); setShares(''); setPrice(''); setFee(''); setNote('')
     } catch (err: unknown) {
       if (!navigator.onLine) {
-        await queueTransaction({ ...form, shares: Number(form.shares), price: form.price ? Number(form.price) : undefined, fee: form.fee ? Number(form.fee) : undefined })
+        await queueTransaction(payload)
         setStatus('ok')
         setMsg('已暫存，恢復連線後自動同步')
-        setForm((f) => ({ ...f, symbol: '', shares: '', price: '', fee: '', note: '' }))
+        setSymbol(''); setShares(''); setPrice(''); setFee(''); setNote('')
         return
       }
       setStatus('error')
@@ -84,55 +98,66 @@ export default function AddPage() {
 
   return (
     <div className="max-w-md mx-auto space-y-5">
+      <PageHeader title="記帳" />
       <form onSubmit={submit} className="space-y-4">
-        {/* Transaction Type */}
+        {/* Type */}
         <div className="flex gap-2">
           {TYPES.map((t) => (
-            <button key={t.value} type="button" onClick={() => set('type', t.value)}
+            <button key={t.value} type="button" onClick={() => setType(t.value)}
               className={cn('flex-1 py-2.5 rounded-xl border text-sm font-semibold transition-all',
-                form.type === t.value ? t.color : 'border-border text-muted-foreground hover:border-muted-foreground/30')}>
+                type === t.value ? t.color : 'border-border text-muted-foreground hover:border-muted-foreground/30')}>
               {t.label}
             </button>
           ))}
         </div>
 
-        {/* Quick Symbol Picker */}
+        {/* Quick Symbol */}
         <div>
           <p className="text-[10px] text-muted-foreground mb-1.5">快速選擇</p>
           <div className="flex flex-wrap gap-1.5">
             {allQuick.map(s => (
               <button key={s} type="button" onClick={() => pickSymbol(s)}
                 className={cn('px-2.5 py-1 rounded-lg text-xs font-medium transition-all',
-                  form.symbol === s ? 'bg-accent text-accent-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/80')}>
+                  symbol === s ? 'bg-accent text-accent-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/80')}>
                 {s}
               </button>
             ))}
           </div>
         </div>
 
-        <input type="date" value={form.date} onChange={(e) => set('date', e.target.value)} required className={inputCls} />
+        {/* Symbol + Shares — the only 2 inputs always visible */}
+        <input placeholder="股票代號 e.g. AAPL / 2330" value={symbol}
+          onChange={(e) => { const v = e.target.value.toUpperCase(); setSymbol(v); const d = inferDefaults(v); setBroker(d.broker); setAssetType(d.assetType) }}
+          required className={inputCls} />
+        <input ref={sharesRef} type="number" placeholder="股數" value={shares}
+          onChange={(e) => setShares(e.target.value)} required min="0" step="any" className={inputCls} />
 
-        <div className="grid grid-cols-2 gap-3">
-          <select value={form.broker} onChange={(e) => set('broker', e.target.value)} className={inputCls}>
-            {BROKERS.map(b => <option key={b} value={b}>{b}</option>)}
-          </select>
-          <select value={form.assetType} onChange={(e) => set('assetType', e.target.value)} className={inputCls}>
-            <option value="個股">個股</option>
-            <option value="ETF">ETF</option>
-            <option value="基金">基金</option>
-          </select>
-        </div>
+        {/* Expandable: date, broker, price, fee, note */}
+        <button type="button" onClick={() => setExpanded(!expanded)}
+          className="text-xs text-muted-foreground hover:text-foreground transition-colors">
+          {expanded ? '▾ 收起選項' : '▸ 更多選項（日期、價格、手續費⋯）'}
+        </button>
 
-        <input placeholder="股票代號 e.g. AAPL / 2330" value={form.symbol}
-          onChange={(e) => set('symbol', e.target.value.toUpperCase())} required className={inputCls} />
-
-        <div className="grid grid-cols-2 gap-3">
-          <input type="number" placeholder="股數" value={form.shares} onChange={(e) => set('shares', e.target.value)} required min="0" step="any" className={inputCls} />
-          <input type="number" placeholder="價格 (選填)" value={form.price} onChange={(e) => set('price', e.target.value)} min="0" step="any" className={inputCls} />
-        </div>
-
-        <input type="number" placeholder="手續費 (選填，台股自動算)" value={form.fee} onChange={(e) => set('fee', e.target.value)} min="0" step="any" className={inputCls} />
-        <input placeholder="備註 (選填)" value={form.note} onChange={(e) => set('note', e.target.value)} className={inputCls} />
+        {expanded && (
+          <div className="space-y-3 pt-1">
+            <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className={inputCls} />
+            <div className="grid grid-cols-2 gap-3">
+              <select value={broker} onChange={(e) => setBroker(e.target.value)} className={inputCls}>
+                {BROKERS.map(b => <option key={b} value={b}>{b}</option>)}
+              </select>
+              <select value={assetType} onChange={(e) => setAssetType(e.target.value)} className={inputCls}>
+                <option value="個股">個股</option>
+                <option value="ETF">ETF</option>
+                <option value="基金">基金</option>
+              </select>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <input type="number" placeholder="價格（選填）" value={price} onChange={(e) => setPrice(e.target.value)} min="0" step="any" className={inputCls} />
+              <input type="number" placeholder="手續費（選填）" value={fee} onChange={(e) => setFee(e.target.value)} min="0" step="any" className={inputCls} />
+            </div>
+            <input placeholder="備註（選填）" value={note} onChange={(e) => setNote(e.target.value)} className={inputCls} />
+          </div>
+        )}
 
         <button type="submit" disabled={status === 'saving'}
           className="w-full rounded-xl bg-accent text-accent-foreground py-3 text-sm font-semibold disabled:opacity-50 hover:opacity-90 transition-opacity">
@@ -141,6 +166,31 @@ export default function AddPage() {
 
         {msg && <p className={cn('text-sm text-center font-medium', status === 'ok' ? 'text-profit' : 'text-loss')}>{msg}</p>}
       </form>
+
+      {/* Recent Transactions */}
+      {recentTx.length > 0 && (
+        <div className="rounded-xl border border-border bg-card p-4">
+          <p className="text-xs font-medium text-muted-foreground mb-3">最近交易</p>
+          <div className="space-y-2">
+            {recentTx.map((tx, i) => (
+              <div key={i} className="flex items-center justify-between text-sm py-1">
+                <div className="flex items-center gap-2">
+                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
+                    tx.type === '買入' || tx.type === 'buy' ? 'bg-profit/10 text-profit' :
+                    tx.type === '賣出' || tx.type === 'sell' ? 'bg-loss/10 text-loss' :
+                    'bg-accent/10 text-accent'
+                  }`}>{tx.type === 'buy' ? '買入' : tx.type === 'sell' ? '賣出' : tx.type === 'dividend' ? '股利' : tx.type}</span>
+                  <span className="text-xs text-muted-foreground">{tx.date}</span>
+                </div>
+                <div className="text-right">
+                  <span className="font-medium">{tx.symbol}</span>
+                  <span className="text-muted-foreground ml-1.5 text-xs">×{tx.shares}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
