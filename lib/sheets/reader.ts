@@ -117,11 +117,16 @@ export async function getBalanceSheet(): Promise<BalanceSheetItem[]> {
 
 export async function getHistory(): Promise<HistoryPoint[]> {
   const rows = await getRange(SHEET_RANGES.history)
+  const header = rows[0] ?? []
+  const assetIdx = header.findIndex(h => /total.*asset|總資產/i.test(h))
+  const liabIdx = header.findIndex(h => /total.*liab|總負債/i.test(h))
+  const ai = assetIdx >= 0 ? assetIdx : 1
+  const li = liabIdx >= 0 ? liabIdx : 2
   return rows.slice(1).filter(r => r[0]).map(r => ({
     date: r[0] ?? '',
-    totalAssets: Number(r[1]) || 0,
-    totalLiabilities: Number(r[2]) || 0,
-    netWorth: (Number(r[1]) || 0) - (Number(r[2]) || 0),
+    totalAssets: Number(r[ai]) || 0,
+    totalLiabilities: Number(r[li]) || 0,
+    netWorth: (Number(r[ai]) || 0) - (Number(r[li]) || 0),
   }))
 }
 

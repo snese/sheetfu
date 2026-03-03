@@ -54,8 +54,8 @@ export function DashboardClient({ d, topHoldings, recentTx, history }: {
       {/* Charts Row: Asset Pie + Risk Bar */}
       <div className="grid grid-cols-2 gap-3">
         <StaggerItem>
-          <Link href="/assets" className="block rounded-xl border border-border bg-card p-4 hover:border-accent/30 transition-colors">
-            <p className="text-xs font-medium text-muted-foreground mb-1">資產組成 →</p>
+          <div className="rounded-xl border border-border bg-card p-4">
+            <SectionLink href="/assets" label="資產組成" />
             <MiniPie data={assetPieData} />
             <div className="flex justify-center gap-3 text-[10px] text-muted-foreground mt-1">
               {assetPieData.map(i => (
@@ -65,15 +65,15 @@ export function DashboardClient({ d, topHoldings, recentTx, history }: {
                 </span>
               ))}
             </div>
-          </Link>
+          </div>
         </StaggerItem>
         <StaggerItem>
-          <Link href="/portfolio" className="block rounded-xl border border-border bg-card p-4 hover:border-accent/30 transition-colors">
-            <p className="text-xs font-medium text-muted-foreground mb-1">風險分布 →</p>
+          <div className="rounded-xl border border-border bg-card p-4">
+            <SectionLink href="/portfolio" label="風險分布" />
             {d.riskDistribution.length > 0
               ? <RiskBar data={d.riskDistribution} />
               : <p className="text-xs text-muted-foreground text-center py-8">無資料</p>}
-          </Link>
+          </div>
         </StaggerItem>
       </div>
 
@@ -101,7 +101,7 @@ export function DashboardClient({ d, topHoldings, recentTx, history }: {
       <StaggerItem>
         <div className="rounded-xl border border-border bg-card p-4">
           <p className="text-xs font-medium text-muted-foreground mb-2">淨值趨勢</p>
-          <NetWorthLine data={history} />
+          <NetWorthLine data={history} currentNetWorth={d.netWorth} />
         </div>
       </StaggerItem>
 

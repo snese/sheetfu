@@ -12,7 +12,7 @@ export function RiskBar({ data }: { data: { level: string; valueTwd: number }[] 
           formatter={(v: number) => `NT$${(v / 1e4).toFixed(0)}萬`}
           {...tooltipStyle}
         />
-        <Bar dataKey="valueTwd" radius={[0, 6, 6, 0]} barSize={18}>
+        <Bar dataKey="valueTwd" name="金額" radius={[0, 6, 6, 0]} barSize={18}>
           {data.map((_, i) => <Cell key={i} fill={RISK_COLORS[i % RISK_COLORS.length]} />)}
         </Bar>
       </BarChart>
