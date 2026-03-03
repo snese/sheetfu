@@ -1,5 +1,6 @@
 import { formatCurrency, formatPercent, formatPnl } from '@/lib/utils'
 import { getPortfolio } from '@/lib/sheets/reader'
+import { PageHeader } from '@/components/layout/PageHeader'
 import type { PortfolioHolding } from '@/lib/sheets/schema'
 
 export const dynamic = 'force-dynamic'
@@ -24,6 +25,7 @@ export default async function PortfolioPage() {
 
   return (
     <div className="space-y-5">
+      <PageHeader title="持倉" subtitle={`${holdings.length} 檔 · 總市值 ${formatCurrency(totalValue)}`} />
       <div className="rounded-2xl border border-border bg-card p-5">
         <div className="grid grid-cols-3 gap-4 text-center">
           <div>

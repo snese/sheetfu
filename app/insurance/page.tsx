@@ -1,5 +1,6 @@
 import { formatCurrency } from '@/lib/utils'
 import { getInsurance } from '@/lib/sheets/reader'
+import { PageHeader } from '@/components/layout/PageHeader'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 600
@@ -18,11 +19,7 @@ export default async function InsurancePage() {
 
   return (
     <div className="space-y-5">
-      <div className="rounded-2xl border border-border bg-card p-5 text-center">
-        <p className="text-xs text-muted-foreground">年繳保費總額</p>
-        <p className="text-2xl font-bold mt-1">{formatCurrency(totalAnnual)}</p>
-        <p className="text-xs text-muted-foreground mt-1">{policies.length} 張保單</p>
-      </div>
+      <PageHeader title="保單管理" subtitle={`${policies.length} 張保單 · 年繳 ${formatCurrency(totalAnnual)}`} />
 
       {Object.entries(byInsured).map(([person, list]) => (
         <div key={person}>

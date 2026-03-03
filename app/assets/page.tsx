@@ -1,5 +1,6 @@
 import { formatCurrency } from '@/lib/utils'
 import { getBalanceSheet } from '@/lib/sheets/reader'
+import { PageHeader } from '@/components/layout/PageHeader'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 600
@@ -21,6 +22,7 @@ export default async function AssetsPage() {
 
   return (
     <div className="space-y-5">
+      <PageHeader title="資產負債" subtitle={`${items.length} 筆項目`} />
       <div className="rounded-2xl border border-border bg-card p-5 text-center">
         <p className="text-xs text-muted-foreground">資產總額</p>
         <p className="text-2xl font-bold mt-1">{formatCurrency(total)}</p>
