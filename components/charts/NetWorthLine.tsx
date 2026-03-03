@@ -1,5 +1,6 @@
 'use client'
 import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'recharts'
+import { tooltipStyle } from '@/lib/chart-theme'
 
 export function NetWorthLine({ data }: { data: { date: string; netWorth: number }[] }) {
   if (data.length < 2) return <p className="text-xs text-muted-foreground text-center py-8">資料不足，至少需 2 筆歷史紀錄</p>
@@ -16,8 +17,7 @@ export function NetWorthLine({ data }: { data: { date: string; netWorth: number 
         <YAxis hide domain={['dataMin - 1000000', 'dataMax + 1000000']} />
         <Tooltip
           formatter={(v: number) => `NT$${(v / 1e4).toFixed(0)}萬`}
-          labelStyle={{ fontSize: 11 }}
-          contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 12 }}
+          {...tooltipStyle}
         />
         <Area type="monotone" dataKey="netWorth" stroke="hsl(var(--accent))" strokeWidth={2} fill="url(#nwGrad)" dot={false} />
       </AreaChart>

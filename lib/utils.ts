@@ -18,7 +18,7 @@ export function formatPercent(value: number): string {
 }
 
 export function formatPnl(value: number): { text: string; color: string; arrow: string } {
-  const color = value >= 0 ? 'text-emerald-500' : 'text-rose-500'
+  const color = value >= 0 ? 'text-profit' : 'text-loss'
   const arrow = value >= 0 ? '▲' : '▼'
   return { text: formatCurrency(value), color, arrow }
 }
