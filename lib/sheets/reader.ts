@@ -7,6 +7,7 @@ import {
   type BalanceSheetItem,
   type HistoryPoint,
   type InsurancePolicy,
+  type Mortgage,
 } from './schema'
 
 const cache = new Map<string, { data: string[][]; ts: number }>()
@@ -138,5 +139,17 @@ export async function getInsurance(): Promise<InsurancePolicy[]> {
     annualPremium: Number(r[5]) || 0, cycle: r[6] ?? '',
     paymentMethod: r[7] ?? '', startDate: r[8] ?? '',
     endDate: r[9] ?? '', nextPayment: r[10] ?? '', note: r[11] ?? '',
+  }))
+}
+
+export async function getMortgages(): Promise<Mortgage[]> {
+  const rows = await getRange(SHEET_RANGES.mortgage)
+  return rows.filter(r => r[0]).map(r => ({
+    name: r[0] ?? '', bank: r[1] ?? '',
+    principal: Number(r[2]) || 0, rate: Number(r[3]) || 0,
+    termMonths: Number(r[4]) || 0, startDate: r[5] ?? '',
+    gracePeriodMonths: Number(r[6]) || 0,
+    monthlyPayment: Number(r[7]) || 0, paidPeriods: Number(r[8]) || 0,
+    paidPrincipal: Number(r[9]) || 0, remainingPrincipal: Number(r[10]) || 0,
   }))
 }
