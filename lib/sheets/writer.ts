@@ -48,6 +48,12 @@ export async function addTransaction(raw: unknown): Promise<{ row: number }> {
 export async function deleteRow(row: number): Promise<void> {
   if (!row || row < 2) throw new ApiError('Invalid row number', 'VALIDATION', 400)
   const sheetId = await getSheetGid(SHEET_TABS.transactions)
+  const res = await sheets.spreadsheets.values.get({
+    spreadsheetId: SHEET_ID,
+    range: `${SHEET_TABS.transactions}!A:A`,
+  })
+  const maxRow = (res.data.values?.length ?? 0)
+  if (row > maxRow) throw new ApiError(`Row ${row} exceeds data range (max ${maxRow})`, 'VALIDATION', 400)
   await sheets.spreadsheets.batchUpdate({
     spreadsheetId: SHEET_ID,
     requestBody: {

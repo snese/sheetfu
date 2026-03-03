@@ -9,7 +9,7 @@ const TEMPLATE_ID = process.env.SHEET_ID || process.argv[2]
 if (!TEMPLATE_ID) { console.error('Usage: SHEET_ID=xxx node scripts/create-template.mjs'); process.exit(1) }
 
 const auth = new google.auth.GoogleAuth({
-  keyFile: '/home/hclo-nrt/hclaw-ops/credentials/google-service-account.json',
+  keyFile: process.env.GOOGLE_APPLICATION_CREDENTIALS,
   scopes: ['https://www.googleapis.com/auth/spreadsheets'],
 })
 const sheets = google.sheets({ version: 'v4', auth })
