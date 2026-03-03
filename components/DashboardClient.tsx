@@ -1,4 +1,5 @@
 'use client'
+import Link from 'next/link'
 import dynamic from 'next/dynamic'
 import { CountUp } from '@/components/charts/CountUp'
 import { FadeIn, StaggerContainer, StaggerItem } from '@/components/charts/Animate'
@@ -8,6 +9,15 @@ import type { DashboardSummary, PortfolioHolding, Transaction, HistoryPoint } fr
 const MiniPie = dynamic(() => import('@/components/charts/MiniPie').then(m => ({ default: m.MiniPie })), { ssr: false })
 const RiskBar = dynamic(() => import('@/components/charts/RiskBar').then(m => ({ default: m.RiskBar })), { ssr: false })
 const NetWorthLine = dynamic(() => import('@/components/charts/NetWorthLine').then(m => ({ default: m.NetWorthLine })), { ssr: false })
+
+function SectionLink({ href, label }: { href: string; label: string }) {
+  return (
+    <Link href={href} className="flex items-center justify-between mb-2 group">
+      <p className="text-xs font-medium text-muted-foreground">{label}</p>
+      <span className="text-xs text-muted-foreground group-hover:text-accent transition-colors">→</span>
+    </Link>
+  )
+}
 
 export function DashboardClient({ d, topHoldings, recentTx, history }: {
   d: DashboardSummary
@@ -44,33 +54,33 @@ export function DashboardClient({ d, topHoldings, recentTx, history }: {
       {/* Charts Row: Asset Pie + Risk Bar */}
       <div className="grid grid-cols-2 gap-3">
         <StaggerItem>
-          <div className="rounded-xl border border-border bg-card p-4">
-            <p className="text-xs font-medium text-muted-foreground mb-1">資產組成</p>
+          <Link href="/assets" className="block rounded-xl border border-border bg-card p-4 hover:border-accent/30 transition-colors">
+            <p className="text-xs font-medium text-muted-foreground mb-1">資產組成 →</p>
             <MiniPie data={assetPieData} />
             <div className="flex justify-center gap-3 text-[10px] text-muted-foreground mt-1">
               {assetPieData.map(i => (
                 <span key={i.name} className="flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full" style={{ background: i.name === '投資' ? 'hsl(220,70%,50%)' : i.name === '現金' ? 'hsl(152,60%,40%)' : 'hsl(38,92%,50%)' }} />
+                  <span className="w-2 h-2 rounded-full" style={{ background: i.name === '投資' ? 'hsl(220,70%,60%)' : i.name === '現金' ? 'hsl(152,55%,50%)' : 'hsl(38,85%,55%)' }} />
                   {i.name}
                 </span>
               ))}
             </div>
-          </div>
+          </Link>
         </StaggerItem>
         <StaggerItem>
-          <div className="rounded-xl border border-border bg-card p-4">
-            <p className="text-xs font-medium text-muted-foreground mb-1">風險分布</p>
+          <Link href="/portfolio" className="block rounded-xl border border-border bg-card p-4 hover:border-accent/30 transition-colors">
+            <p className="text-xs font-medium text-muted-foreground mb-1">風險分布 →</p>
             {d.riskDistribution.length > 0
               ? <RiskBar data={d.riskDistribution} />
               : <p className="text-xs text-muted-foreground text-center py-8">無資料</p>}
-          </div>
+          </Link>
         </StaggerItem>
       </div>
 
       {/* Market Distribution */}
       <StaggerItem>
         <div className="rounded-xl border border-border bg-card p-4">
-          <p className="text-xs font-medium text-muted-foreground mb-3">市場分布</p>
+          <SectionLink href="/portfolio" label="市場分布" />
           <div className="space-y-2.5">
             {d.marketDistribution.map(m => (
               <div key={m.market}>
@@ -90,7 +100,7 @@ export function DashboardClient({ d, topHoldings, recentTx, history }: {
       {/* Net Worth Trend */}
       <StaggerItem>
         <div className="rounded-xl border border-border bg-card p-4">
-          <p className="text-xs font-medium text-muted-foreground mb-2">淨值趋勢</p>
+          <p className="text-xs font-medium text-muted-foreground mb-2">淨值趨勢</p>
           <NetWorthLine data={history} />
         </div>
       </StaggerItem>
@@ -98,7 +108,7 @@ export function DashboardClient({ d, topHoldings, recentTx, history }: {
       {/* Top Holdings */}
       <StaggerItem>
         <div className="rounded-xl border border-border bg-card p-4">
-          <p className="text-xs font-medium text-muted-foreground mb-3">前 5 大持倉</p>
+          <SectionLink href="/portfolio" label="前 5 大持倉" />
           <div className="space-y-3">
             {topHoldings.map((h) => {
               const hp = formatPnl(h.pnlTwd)
@@ -134,7 +144,7 @@ export function DashboardClient({ d, topHoldings, recentTx, history }: {
       {/* Recent Transactions */}
       <StaggerItem>
         <div className="rounded-xl border border-border bg-card p-4">
-          <p className="text-xs font-medium text-muted-foreground mb-3">最近交易</p>
+          <SectionLink href="/add" label="最近交易" />
           <div className="space-y-2">
             {recentTx.map((tx, i) => (
               <div key={i} className="flex items-center justify-between text-sm py-1">
