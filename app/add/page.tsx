@@ -98,7 +98,7 @@ export default function AddPage() {
 
   return (
     <div className="max-w-md mx-auto space-y-5">
-      <PageHeader title="記帳" />
+      <PageHeader title="交易" />
       <form onSubmit={submit} className="space-y-4">
         {/* Type */}
         <div className="flex gap-2">
