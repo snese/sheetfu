@@ -75,6 +75,20 @@ export interface HistoryPoint {
   netWorth: number
 }
 
+export interface Mortgage {
+  name: string
+  bank: string
+  principal: number
+  rate: number
+  termMonths: number
+  startDate: string
+  gracePeriodMonths: number
+  monthlyPayment: number
+  paidPeriods: number
+  paidPrincipal: number
+  remainingPrincipal: number
+}
+
 export interface InsurancePolicy {
   insured: string
   company: string
@@ -97,6 +111,7 @@ export const SHEET_TABS = {
   balanceSheet: 'v2_資產負債表',
   history: 'v2_歷史紀錄',
   insurance: 'v2_保單管理',
+  mortgage: 'v2_房貸',
 } as const
 
 export const SHEET_RANGES = {
@@ -106,4 +121,5 @@ export const SHEET_RANGES = {
   balanceSheet: 'v2_資產負債表!A1:H15',
   history: 'v2_歷史紀錄!A1:D',
   insurance: 'v2_保單管理!A2:L',
+  mortgage: 'v2_房貸!A2:L',
 } as const
