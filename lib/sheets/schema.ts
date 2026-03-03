@@ -95,7 +95,7 @@ export const SHEET_TABS = {
   portfolio: 'v2_投資組合',
   overview: 'v2_總覽',
   balanceSheet: 'v2_資產負債表',
-  history: '歷史紀錄 (History)',
+  history: 'v2_歷史紀錄',
   insurance: 'v2_保單管理',
 } as const
 
@@ -104,6 +104,6 @@ export const SHEET_RANGES = {
   portfolio: 'v2_投資組合!A2:O',
   overview: 'v2_總覽!A1:B33',
   balanceSheet: 'v2_資產負債表!A1:H15',
-  history: '歷史紀錄 (History)!A1:D',
+  history: 'v2_歷史紀錄!A1:D',
   insurance: 'v2_保單管理!A2:L',
 } as const
