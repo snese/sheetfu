@@ -7,6 +7,7 @@ out/
 credentials/
 *.json.key
 *.pem
+public/snapshot.json
 .DS_Store
 *.tsbuildinfo
 next-env.d.ts
