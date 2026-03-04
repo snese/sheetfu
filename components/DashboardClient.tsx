@@ -54,7 +54,7 @@ export function DashboardClient({ d, topHoldings, recentTx, history, mortgages }
             <span>負債 {formatCurrency(d.totalLiabilities)}</span>
           </div>
           <p className={`text-sm mt-2 font-medium ${pnl.color}`}>
-            投資損益 {pnl.arrow} {pnl.text} ({formatPercent(d.performance.returnPercent / 100)})
+            投資損益 {pnl.arrow} {pnl.text} ({formatPercent(d.performance.returnPercent)})
           </p>
         </div>
       </StaggerItem>
