@@ -18,7 +18,7 @@ export async function GET(request: Request) {
   } catch {
     try {
       const snapshot = await getSnapshot<Transaction[]>('transactions')
-      const data = limit ? snapshot.data.slice(-limit) : snapshot.data
+      const data = limit ? snapshot.data.slice(0, limit) : snapshot.data
       return NextResponse.json({ data, updatedAt: snapshot.updatedAt, stale: true })
     } catch {
       return NextResponse.json({ error: 'No data available', code: 'NO_DATA' }, { status: 503 })
@@ -42,6 +42,9 @@ export async function POST(request: Request) {
 export async function DELETE(request: Request) {
   try {
     const { row } = await request.json()
+    if (typeof row !== 'number' || row < 2 || row > 10000) {
+      return NextResponse.json({ error: 'Invalid row number (must be 2-10000)' }, { status: 400 })
+    }
     await deleteRow(row)
     invalidateCache()
     revalidatePath('/')
