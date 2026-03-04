@@ -14,12 +14,17 @@ export default async function AssetsPage() {
     return <div className="text-center py-12 text-muted-foreground">無法載入資產資料</div>
   }
 
-  const grouped = items.reduce<Record<string, typeof items>>((acc, i) => {
+  const liabilityCategories = new Set(['長期負債', '短期負債'])
+  const assets = items.filter(i => !liabilityCategories.has(i.category))
+  const liabilities = items.filter(i => liabilityCategories.has(i.category))
+
+  const grouped = assets.reduce<Record<string, typeof items>>((acc, i) => {
     ;(acc[i.category] ??= []).push(i)
     return acc
   }, {})
 
-  const total = items.reduce((s, i) => s + i.amountTwd, 0)
+  const total = assets.reduce((s, i) => s + i.amountTwd, 0)
+  const totalLiabilities = liabilities.reduce((s, i) => s + i.amountTwd, 0)
 
   const categoryEmoji: Record<string, string> = { '現金': '💵', '投資': '📈', '不動產': '🏠', '長期負債': '🏦' }
 
@@ -54,6 +59,29 @@ export default async function AssetsPage() {
           </div>
         </div>
       ))}
+
+      {liabilities.length > 0 && (
+        <div>
+          <h2 className="text-xs font-semibold text-muted-foreground mb-2 px-1">🏦 負債</h2>
+          <div className="space-y-2">
+            {liabilities.map((item, i) => (
+              <div key={i} className="rounded-xl border border-border bg-card p-3 flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium">{item.subCategory}</p>
+                  <p className="text-[10px] text-muted-foreground">{item.description}{item.lastUpdate ? ` · ${item.lastUpdate}` : ''}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm font-semibold text-loss">{formatCurrency(item.amountTwd)}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="rounded-xl border border-border bg-card/50 p-3 mt-2 flex justify-between">
+            <p className="text-xs text-muted-foreground">淨值</p>
+            <p className="text-sm font-bold">{formatCurrency(total - totalLiabilities)}</p>
+          </div>
+        </div>
+      )}
 
       {mortgages.length > 0 && (
         <div>
