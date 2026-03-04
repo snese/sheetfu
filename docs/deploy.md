@@ -17,10 +17,11 @@
    - Framework preset: **Next.js**
    - Build command: `npm run build`
    - Build output directory: `.next`
-5. Environment variables — add all from `.env.local`:
+5. Environment variables — add:
+   - `SHEET_ID`
    - `GOOGLE_SERVICE_ACCOUNT_EMAIL`
    - `GOOGLE_PRIVATE_KEY`
-   - `GOOGLE_SHEET_ID`
+   - `ALLOWED_EMAILS` (comma-separated family emails)
 6. Click **Save and Deploy**
 
 ### Custom Domain (Optional)
@@ -42,7 +43,7 @@ To restrict access to family members only:
    - Include: Emails — add family member emails
 5. Save
 
-Now only listed emails can access the dashboard.
+Cloudflare Access sends `cf-access-authenticated-user-email` header on every request. SheetFu middleware validates this header for API routes.
 
 ## Verify Deployment
 

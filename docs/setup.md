@@ -25,8 +25,6 @@
    - Keys tab → Add Key → Create new key → JSON
    - Save the downloaded JSON file
 
-<!-- TODO: Add screenshots -->
-
 ## 2. Share Sheet with Service Account
 
 1. Open your SheetFu template in Google Sheets
@@ -37,12 +35,22 @@
 
 ## 3. Configure Environment
 
-Create `.env.local` in the project root:
+```bash
+cp .env.example .env.local
+```
+
+Edit `.env.local`:
 
 ```env
+# Required
+SHEET_ID=your-sheet-id-from-url
+
+# Option A: JSON key file (recommended for local dev)
+GOOGLE_APPLICATION_CREDENTIALS=/path/to/service-account.json
+
+# Option B: Inline credentials (for Cloudflare Pages)
 GOOGLE_SERVICE_ACCOUNT_EMAIL=your-sa@your-project.iam.gserviceaccount.com
 GOOGLE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
-GOOGLE_SHEET_ID=your-sheet-id-from-url
 ```
 
 The Sheet ID is in the URL: `https://docs.google.com/spreadsheets/d/{SHEET_ID}/edit`
@@ -50,6 +58,7 @@ The Sheet ID is in the URL: `https://docs.google.com/spreadsheets/d/{SHEET_ID}/e
 ## 4. Verify
 
 ```bash
+npm install
 npm run dev
 # Open http://localhost:3000
 # If you see your data, setup is complete.
