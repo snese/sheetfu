@@ -9,6 +9,12 @@ import type { DashboardSummary, PortfolioHolding, Transaction, HistoryPoint, Mor
 const MiniPie = dynamic(() => import('@/components/charts/MiniPie').then(m => ({ default: m.MiniPie })), { ssr: false })
 const NetWorthLine = dynamic(() => import('@/components/charts/NetWorthLine').then(m => ({ default: m.NetWorthLine })), { ssr: false })
 
+const ASSET_COLORS = {
+  '不動產': 'hsl(38,85%,55%)',
+  '投資': 'hsl(220,70%,60%)',
+  '現金': 'hsl(152,55%,50%)',
+} as const
+
 function SectionLink({ href, label }: { href: string; label: string }) {
   return (
     <Link href={href} className="flex items-center justify-between mb-2 group">
@@ -31,7 +37,7 @@ export function DashboardClient({ d, topHoldings, recentTx, history, mortgages }
     { name: '投資', value: d.investment },
     { name: '現金', value: d.cash },
   ]
-  const totalMortgageRemaining = mortgages.reduce((s, m) => s + m.remainingPrincipal, 0)
+  const pieColors = assetPieData.map(i => ASSET_COLORS[i.name as keyof typeof ASSET_COLORS] ?? 'hsl(280,55%,60%)')
   const totalMortgageMonthly = mortgages.reduce((s, m) => s + m.monthlyPayment, 0)
 
   return (
@@ -57,12 +63,12 @@ export function DashboardClient({ d, topHoldings, recentTx, history, mortgages }
       <StaggerItem>
         <div className="rounded-xl border border-border bg-card p-4">
           <SectionLink href="/assets" label="資產組成" />
-          <MiniPie data={assetPieData} />
+          <MiniPie data={assetPieData} colors={pieColors} />
           <div className="flex justify-center gap-3 text-[10px] text-muted-foreground mt-1">
-            {assetPieData.map(i => (
-              <span key={i.name} className="flex items-center gap-1">
-                <span className="w-2 h-2 rounded-full" style={{ background: i.name === '不動產' ? 'hsl(38,85%,55%)' : i.name === '投資' ? 'hsl(220,70%,60%)' : 'hsl(152,55%,50%)' }} />
-                {i.name} {((i.value / d.totalAssets) * 100).toFixed(0)}%
+            {assetPieData.map((item, i) => (
+              <span key={item.name} className="flex items-center gap-1">
+                <span className="w-2 h-2 rounded-full" style={{ background: pieColors[i] }} />
+                {item.name} {((item.value / d.totalAssets) * 100).toFixed(0)}%
               </span>
             ))}
           </div>

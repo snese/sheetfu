@@ -34,6 +34,11 @@ function pctToNum(s: string): number {
   return parseFloat(String(s).replace('%', '')) || 0
 }
 
+function parseDate(s: string): number {
+  if (!s) return 0
+  return new Date(s.replace(/\//g, '-')).getTime() || 0
+}
+
 export async function getTransactions(limit?: number): Promise<Transaction[]> {
   const rows = await getRange(SHEET_RANGES.transactions)
   const data = rows.map((r) => ({
@@ -44,7 +49,8 @@ export async function getTransactions(limit?: number): Promise<Transaction[]> {
     currency: r[8] ?? '', totalCost: Number(r[9]) || 0,
     fee: Number(r[10]) || 0, fxRate: Number(r[11]) || 0, note: r[12] ?? '',
   }))
-  return limit ? data.slice(-limit) : data
+  data.sort((a, b) => parseDate(b.date) - parseDate(a.date))
+  return limit ? data.slice(0, limit) : data
 }
 
 export async function getPortfolio(): Promise<PortfolioHolding[]> {
