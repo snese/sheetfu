@@ -62,7 +62,7 @@ export async function getPortfolio(): Promise<PortfolioHolding[]> {
     valueLocal: Number(r[6]) || 0, fxRate: Number(r[7]) || 0,
     valueTwd: Number(r[8]) || 0, avgCost: Number(r[9]) || 0,
     costTwd: Number(r[10]) || 0, pnlTwd: Number(r[11]) || 0,
-    pnlPercent: Number(r[12]) || 0, riskLevel: r[13] ?? '',
+    pnlPercent: (Number(r[12]) || 0) * 100, riskLevel: r[13] ?? '',
     totalPortfolio: Number(r[14]) || 0,
   }))
 }
@@ -155,7 +155,7 @@ export async function getMortgages(): Promise<Mortgage[]> {
     principal: Number(r[2]) || 0, rate: Number(r[3]) || 0,
     termMonths: Number(r[4]) || 0, startDate: r[5] ?? '',
     gracePeriodMonths: Number(r[6]) || 0,
-    monthlyPayment: Number(r[7]) || 0, paidPeriods: Number(r[8]) || 0,
-    paidPrincipal: Number(r[9]) || 0, remainingPrincipal: Number(r[10]) || 0,
+    monthlyPayment: parseTwd(r[7] ?? ''), paidPeriods: Number(r[8]) || 0,
+    paidPrincipal: parseTwd(r[9] ?? ''), remainingPrincipal: parseTwd(r[10] ?? ''),
   }))
 }
