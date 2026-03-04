@@ -8,8 +8,11 @@ import { google } from 'googleapis'
 const TEMPLATE_ID = process.env.SHEET_ID || process.argv[2]
 if (!TEMPLATE_ID) { console.error('Usage: SHEET_ID=xxx node scripts/create-template.mjs'); process.exit(1) }
 
+const credPath = process.env.GOOGLE_APPLICATION_CREDENTIALS
+if (!credPath) { console.error('Error: GOOGLE_APPLICATION_CREDENTIALS env var is required'); process.exit(1) }
+
 const auth = new google.auth.GoogleAuth({
-  keyFile: process.env.GOOGLE_APPLICATION_CREDENTIALS,
+  keyFile: credPath,
   scopes: ['https://www.googleapis.com/auth/spreadsheets'],
 })
 const sheets = google.sheets({ version: 'v4', auth })
@@ -85,7 +88,7 @@ await sheets.spreadsheets.values.update({
 })
 await sleep(2000)
 
-// 4. Portfolio
+// 4-8: remaining template setup (unchanged)
 console.log('Writing Portfolio...')
 await sheets.spreadsheets.values.update({
   spreadsheetId: TEMPLATE_ID, range: 'v2_投資組合!A1:O7', valueInputOption: 'USER_ENTERED',
@@ -101,7 +104,6 @@ await sheets.spreadsheets.values.update({
 })
 await sleep(2000)
 
-// 5. Balance Sheet
 console.log('Writing Balance Sheet...')
 await sheets.spreadsheets.values.update({
   spreadsheetId: TEMPLATE_ID, range: 'v2_資產負債表!A1:G8', valueInputOption: 'USER_ENTERED',
@@ -118,7 +120,6 @@ await sheets.spreadsheets.values.update({
 })
 await sleep(2000)
 
-// 6. Overview
 console.log('Writing Overview...')
 await sheets.spreadsheets.values.update({
   spreadsheetId: TEMPLATE_ID, range: 'v2_總覽!A1:B12', valueInputOption: 'USER_ENTERED',
@@ -139,7 +140,6 @@ await sheets.spreadsheets.values.update({
 })
 await sleep(2000)
 
-// 7. Holdings Detail
 console.log('Writing Holdings Detail...')
 await sheets.spreadsheets.values.update({
   spreadsheetId: TEMPLATE_ID, range: 'v2_持倉明細!A1:H10', valueInputOption: 'USER_ENTERED',
@@ -158,7 +158,6 @@ await sheets.spreadsheets.values.update({
 })
 await sleep(1000)
 
-// 8. Freeze headers
 console.log('Freezing headers...')
 const { data: final } = await sheets.spreadsheets.get({ spreadsheetId: TEMPLATE_ID, fields: 'sheets.properties' })
 const freezeReqs = final.sheets
