@@ -117,7 +117,7 @@ export const SHEET_TABS = {
 export const SHEET_RANGES = {
   transactions: 'v2_交易紀錄!A2:M',
   portfolio: 'v2_投資組合!A2:O',
-  overview: 'v2_總覽!A1:B33',
+  overview: 'v2_總覽!A1:B',
   balanceSheet: 'v2_資產負債表!A1:H',
   history: 'v2_歷史紀錄!A1:D',
   insurance: 'v2_保單管理!A2:L',

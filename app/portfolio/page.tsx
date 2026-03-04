@@ -4,7 +4,6 @@ import { PageHeader } from '@/components/layout/PageHeader'
 import { PortfolioCharts } from '@/components/PortfolioCharts'
 import type { PortfolioHolding } from '@/lib/sheets/schema'
 
-export const dynamic = 'force-dynamic'
 export const revalidate = 600
 
 export default async function PortfolioPage() {
@@ -17,7 +16,8 @@ export default async function PortfolioPage() {
       getPortfolio(),
       getDashboardSummary(),
     ])
-  } catch {
+  } catch (e) {
+    console.error('[Portfolio] Failed to load:', e)
     return <div className="text-center py-12 text-muted-foreground">無法載入持倉資料</div>
   }
 
