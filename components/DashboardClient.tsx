@@ -113,8 +113,8 @@ export function DashboardClient({ d, topHoldings, recentTx, history, mortgages }
       {/* Net Worth Trend */}
       <StaggerItem>
         <div className="rounded-xl border border-border bg-card p-4">
-          <p className="text-xs font-medium text-muted-foreground mb-2">淨值趨勢</p>
-          <NetWorthLine data={history} currentNetWorth={d.netWorth} />
+          <p className="text-xs font-medium text-muted-foreground mb-2">流動性淨值趨勢</p>
+          <NetWorthLine data={history} />
         </div>
       </StaggerItem>
 
