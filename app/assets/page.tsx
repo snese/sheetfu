@@ -1,6 +1,7 @@
 import { formatCurrency } from '@/lib/utils'
 import { getBalanceSheet, getMortgages } from '@/lib/sheets/reader'
 import { PageHeader } from '@/components/layout/PageHeader'
+import { ErrorState } from '@/components/ErrorState'
 
 export const revalidate = 600
 
@@ -11,7 +12,7 @@ export default async function AssetsPage() {
     [items, mortgages] = await Promise.all([getBalanceSheet(), getMortgages()])
   } catch (e) {
     console.error('[Assets] Failed to load:', e)
-    return <div className="text-center py-12 text-muted-foreground">無法載入資產資料</div>
+    return <ErrorState message="無法載入資產資料" />
   }
 
   const liabilityCategories = new Set(['長期負債', '短期負債'])
