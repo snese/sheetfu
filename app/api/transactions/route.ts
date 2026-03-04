@@ -2,9 +2,7 @@ import { NextResponse } from 'next/server'
 import { revalidatePath } from 'next/cache'
 import { getTransactions, invalidateCache } from '@/lib/sheets/reader'
 import { addTransaction, deleteRow } from '@/lib/sheets/writer'
-import { getSnapshot } from '@/lib/sheets/cache'
 import { handleApiError } from '@/lib/api-error'
-import type { Transaction } from '@/lib/sheets/schema'
 
 export const revalidate = 600
 
@@ -16,13 +14,7 @@ export async function GET(request: Request) {
     const data = await getTransactions(limit)
     return NextResponse.json({ data, updatedAt: new Date().toISOString() })
   } catch {
-    try {
-      const snapshot = await getSnapshot<Transaction[]>('transactions')
-      const data = limit ? snapshot.data.slice(0, limit) : snapshot.data
-      return NextResponse.json({ data, updatedAt: snapshot.updatedAt, stale: true })
-    } catch {
-      return NextResponse.json({ error: 'No data available', code: 'NO_DATA' }, { status: 503 })
-    }
+    return NextResponse.json({ error: 'No data available', code: 'NO_DATA' }, { status: 503 })
   }
 }
 
