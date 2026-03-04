@@ -24,25 +24,34 @@ async function getRange(range: string): Promise<string[][]> {
 
 export function invalidateCache() { cache.clear() }
 
-function parseTwd(s: string): number {
+export function parseTwd(s: string): number {
   if (!s) return 0
   return Number(String(s).replace(/[NT$,\s]/g, '').replace(/^-/, '')) * (String(s).includes('-') ? -1 : 1) || 0
 }
 
-function pctToNum(s: string): number {
+export function pctToNum(s: string): number {
   if (!s) return 0
   return parseFloat(String(s).replace('%', '')) || 0
 }
 
-function parseDate(s: string): number {
+/** Normalize any date string (YYYY/M/D, YYYY-MM-DD, etc.) to YYYY-MM-DD */
+export function normalizeDate(s: string): string {
+  if (!s) return ''
+  const parts = s.split(/[\/\-]/)
+  if (parts.length !== 3 || parts.some(p => !/^\d+$/.test(p))) return s
+  const [y, m, d] = parts
+  return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`
+}
+
+export function parseDate(s: string): number {
   if (!s) return 0
-  return new Date(s.replace(/\//g, '-')).getTime() || 0
+  return new Date(normalizeDate(s)).getTime() || 0
 }
 
 export async function getTransactions(limit?: number): Promise<Transaction[]> {
   const rows = await getRange(SHEET_RANGES.transactions)
   const data = rows.map((r) => ({
-    date: r[0] ?? '', broker: r[1] ?? '', symbol: r[2] ?? '',
+    date: normalizeDate(r[0] ?? ''), broker: r[1] ?? '', symbol: r[2] ?? '',
     market: (r[3] ?? 'US') as Transaction['market'],
     assetType: r[4] ?? '', type: r[5] ?? '',
     shares: Number(r[6]) || 0, price: Number(r[7]) || 0,
