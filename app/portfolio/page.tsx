@@ -1,14 +1,23 @@
 import { formatCurrency, formatPercent, formatPnl } from '@/lib/utils'
-import { getPortfolio } from '@/lib/sheets/reader'
+import { getPortfolio, getDashboardSummary } from '@/lib/sheets/reader'
 import { PageHeader } from '@/components/layout/PageHeader'
+import { PortfolioCharts } from '@/components/PortfolioCharts'
 import type { PortfolioHolding } from '@/lib/sheets/schema'
 
-export const dynamic = 'force-dynamic'
 export const revalidate = 600
 
 export default async function PortfolioPage() {
   let holdings: PortfolioHolding[] = []
-  try { holdings = await getPortfolio() } catch {
+  let marketDist: { market: string; valueTwd: number }[] = []
+  let riskDist: { level: string; valueTwd: number }[] = []
+  let riskScore = 0
+  try {
+    [holdings, { marketDistribution: marketDist, riskDistribution: riskDist, riskScore }] = await Promise.all([
+      getPortfolio(),
+      getDashboardSummary(),
+    ])
+  } catch (e) {
+    console.error('[Portfolio] Failed to load:', e)
     return <div className="text-center py-12 text-muted-foreground">無法載入持倉資料</div>
   }
 
@@ -42,6 +51,13 @@ export default async function PortfolioPage() {
           </div>
         </div>
       </div>
+
+      <PortfolioCharts
+        marketDistribution={marketDist}
+        riskDistribution={riskDist}
+        riskScore={riskScore}
+        totalInvestment={totalValue}
+      />
 
       {Object.entries(grouped).map(([group, items]) => (
         <div key={group}>

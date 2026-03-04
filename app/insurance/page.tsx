@@ -2,12 +2,12 @@ import { formatCurrency } from '@/lib/utils'
 import { getInsurance } from '@/lib/sheets/reader'
 import { PageHeader } from '@/components/layout/PageHeader'
 
-export const dynamic = 'force-dynamic'
 export const revalidate = 600
 
 export default async function InsurancePage() {
   let policies: Awaited<ReturnType<typeof getInsurance>> = []
-  try { policies = await getInsurance() } catch {
+  try { policies = await getInsurance() } catch (e) {
+    console.error('[Insurance] Failed to load:', e)
     return <div className="text-center py-12 text-muted-foreground">無法載入保單資料</div>
   }
 
@@ -19,7 +19,7 @@ export default async function InsurancePage() {
 
   return (
     <div className="space-y-5">
-      <PageHeader title="保單管理" subtitle={`${policies.length} 張保單 · 年繳 ${formatCurrency(totalAnnual)}`} />
+      <PageHeader title="保單" subtitle={`${policies.length} 張保單 · 年繳 ${formatCurrency(totalAnnual)}`} />
 
       {Object.entries(byInsured).map(([person, list]) => (
         <div key={person}>

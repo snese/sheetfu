@@ -8,7 +8,7 @@ const tabs = [
   { href: '/', label: '總覽' },
   { href: '/portfolio', label: '持倉' },
   { href: '/assets', label: '資產' },
-  { href: '/add', label: '交易' },
+  { href: '/add', label: '記帳' },
   { href: '/insurance', label: '保單' },
 ]
 
