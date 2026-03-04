@@ -157,7 +157,7 @@ export function DashboardClient({ d, topHoldings, recentTx, history, mortgages }
       {/* Recent Transactions */}
       <StaggerItem>
         <div className="rounded-xl border border-border bg-card p-4">
-          <SectionLink href="/add" label="最近交易" />
+          <p className="text-xs font-medium text-muted-foreground mb-2">最近交易</p>
           <div className="space-y-2">
             {recentTx.map((tx, i) => (
               <div key={i} className="flex items-center justify-between text-sm py-1">
