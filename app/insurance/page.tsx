@@ -1,6 +1,7 @@
 import { formatCurrency } from '@/lib/utils'
 import { getInsurance } from '@/lib/sheets/reader'
 import { PageHeader } from '@/components/layout/PageHeader'
+import { ErrorState } from '@/components/ErrorState'
 
 export const revalidate = 600
 
@@ -8,7 +9,7 @@ export default async function InsurancePage() {
   let policies: Awaited<ReturnType<typeof getInsurance>> = []
   try { policies = await getInsurance() } catch (e) {
     console.error('[Insurance] Failed to load:', e)
-    return <div className="text-center py-12 text-muted-foreground">無法載入保單資料</div>
+    return <ErrorState message="無法載入保單資料" />
   }
 
   const totalAnnual = policies.reduce((s, p) => s + p.annualPremium, 0)

@@ -6,5 +6,7 @@ export async function POST() {
   invalidateCache()
   revalidatePath('/')
   revalidatePath('/portfolio')
+  revalidatePath('/assets')
+  revalidatePath('/insurance')
   return NextResponse.json({ revalidated: true, ts: new Date().toISOString() })
 }

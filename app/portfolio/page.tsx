@@ -1,6 +1,7 @@
 import { formatCurrency, formatPercent, formatPnl } from '@/lib/utils'
 import { getPortfolio, getDashboardSummary } from '@/lib/sheets/reader'
 import { PageHeader } from '@/components/layout/PageHeader'
+import { ErrorState } from '@/components/ErrorState'
 import { PortfolioCharts } from '@/components/PortfolioCharts'
 import type { PortfolioHolding } from '@/lib/sheets/schema'
 
@@ -18,7 +19,7 @@ export default async function PortfolioPage() {
     ])
   } catch (e) {
     console.error('[Portfolio] Failed to load:', e)
-    return <div className="text-center py-12 text-muted-foreground">無法載入持倉資料</div>
+    return <ErrorState message="無法載入持倉資料" />
   }
 
   const grouped = holdings.reduce<Record<string, PortfolioHolding[]>>((acc, h) => {

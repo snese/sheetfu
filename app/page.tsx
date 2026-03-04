@@ -1,5 +1,6 @@
 import { getDashboardSummary, getPortfolio, getTransactions, getHistory, getMortgages } from '@/lib/sheets/reader'
 import { DashboardClient } from '@/components/DashboardClient'
+import { ErrorState } from '@/components/ErrorState'
 
 export const revalidate = 600
 
@@ -16,6 +17,6 @@ export default async function Home() {
     return <DashboardClient d={d} topHoldings={topHoldings} recentTx={transactions} history={history} mortgages={mortgages} />
   } catch (e) {
     console.error('[Dashboard] Failed to load:', e)
-    return <div className="text-center py-12 text-muted-foreground">無法載入資料，請確認 .env.local 設定</div>
+    return <ErrorState message="無法載入資料" />
   }
 }

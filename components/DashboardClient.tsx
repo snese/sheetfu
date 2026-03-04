@@ -68,7 +68,7 @@ export function DashboardClient({ d, topHoldings, recentTx, history, mortgages }
             {assetPieData.map((item, i) => (
               <span key={item.name} className="flex items-center gap-1">
                 <span className="w-2 h-2 rounded-full" style={{ background: pieColors[i] }} />
-                {item.name} {((item.value / d.totalAssets) * 100).toFixed(0)}%
+                {item.name} {(d.totalAssets > 0 ? (item.value / d.totalAssets) * 100 : 0).toFixed(0)}%
               </span>
             ))}
           </div>

@@ -55,7 +55,7 @@ export async function getTransactions(limit?: number): Promise<Transaction[]> {
 
 export async function getPortfolio(): Promise<PortfolioHolding[]> {
   const rows = await getRange(SHEET_RANGES.portfolio)
-  return rows.filter(r => r[0] && r[0].trim()).map((r) => ({
+  const result = rows.filter(r => r[0] && r[0].trim()).map((r) => ({
     symbol: r[0] ?? '', market: (r[1] ?? 'US') as PortfolioHolding['market'],
     assetType: r[2] ?? '', currency: r[3] ?? '',
     shares: Number(r[4]) || 0, currentPrice: Number(r[5]) || 0,
@@ -65,6 +65,9 @@ export async function getPortfolio(): Promise<PortfolioHolding[]> {
     pnlPercent: (Number(r[12]) || 0) * 100, riskLevel: r[13] ?? '',
     totalPortfolio: Number(r[14]) || 0,
   }))
+  if (result.length > 0 && result.every(h => h.valueTwd === 0))
+    console.warn('[reader] getPortfolio: all valueTwd=0, possible Sheet format change')
+  return result
 }
 
 export async function getDashboardSummary(): Promise<DashboardSummary> {
@@ -91,7 +94,7 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
     else kv[key] = val
   }
 
-  return {
+  const summary: DashboardSummary = {
     netWorth: parseTwd(kv['家庭總淨值'] ?? '0'),
     totalAssets: parseTwd(kv['總資產'] ?? '0'),
     totalLiabilities: parseTwd(kv['總負債'] ?? '0'),
@@ -108,6 +111,9 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
       returnPercent: pctToNum(kv['總報酬率'] ?? '0'),
     },
   }
+  if (summary.totalAssets === 0 && summary.netWorth === 0 && rows.length > 0)
+    console.warn('[reader] getDashboardSummary: all zeros, possible Sheet format change')
+  return summary
 }
 
 export async function getBalanceSheet(): Promise<BalanceSheetItem[]> {
