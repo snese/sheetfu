@@ -15,6 +15,7 @@ jobs:
           node-version: 20
       - run: npm install
       - run: npm run type-check
+      - run: npm test
       - run: npm run build
       - name: Gitleaks
         uses: gitleaks/gitleaks-action@v2
