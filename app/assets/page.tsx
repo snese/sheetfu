@@ -1,14 +1,17 @@
 import { formatCurrency } from '@/lib/utils'
-import { getBalanceSheet } from '@/lib/sheets/reader'
+import { getBalanceSheet, getMortgages } from '@/lib/sheets/reader'
 import { PageHeader } from '@/components/layout/PageHeader'
 
-export const dynamic = 'force-dynamic'
 export const revalidate = 600
 
 export default async function AssetsPage() {
   let items: Awaited<ReturnType<typeof getBalanceSheet>> = []
-  try { items = await getBalanceSheet() } catch {
-    return <div className="text-center py-12 text-muted-foreground">無法載入資產負債資料</div>
+  let mortgages: Awaited<ReturnType<typeof getMortgages>> = []
+  try {
+    [items, mortgages] = await Promise.all([getBalanceSheet(), getMortgages()])
+  } catch (e) {
+    console.error('[Assets] Failed to load:', e)
+    return <div className="text-center py-12 text-muted-foreground">無法載入資產資料</div>
   }
 
   const grouped = items.reduce<Record<string, typeof items>>((acc, i) => {
@@ -22,7 +25,7 @@ export default async function AssetsPage() {
 
   return (
     <div className="space-y-5">
-      <PageHeader title="資產負債" subtitle={`${items.length} 筆項目`} />
+      <PageHeader title="資產總覽" subtitle={`${items.length} 筆項目`} />
       <div className="rounded-2xl border border-border bg-card p-5 text-center">
         <p className="text-xs text-muted-foreground">資產總額</p>
         <p className="text-2xl font-bold mt-1">{formatCurrency(total)}</p>
@@ -51,6 +54,40 @@ export default async function AssetsPage() {
           </div>
         </div>
       ))}
+
+      {mortgages.length > 0 && (
+        <div>
+          <h2 className="text-xs font-semibold text-muted-foreground mb-2 px-1">🏠 房貸明細</h2>
+          <div className="space-y-2">
+            {mortgages.map((m, i) => {
+              const paidPct = m.principal > 0 ? (m.paidPrincipal / m.principal) * 100 : 0
+              return (
+                <div key={i} className="rounded-xl border border-border bg-card p-3">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <p className="text-sm font-medium">{m.name}</p>
+                      <p className="text-[10px] text-muted-foreground">{m.bank} · {m.startDate} · {(m.rate * 100).toFixed(2)}%</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-semibold">{formatCurrency(m.remainingPrincipal)}</p>
+                      <p className="text-[10px] text-muted-foreground">月付 {formatCurrency(m.monthlyPayment)}</p>
+                    </div>
+                  </div>
+                  <div className="mt-2">
+                    <div className="h-2 rounded-full bg-muted overflow-hidden">
+                      <div className="h-full rounded-full bg-accent transition-all duration-700" style={{ width: `${paidPct}%` }} />
+                    </div>
+                    <div className="flex justify-between text-[10px] text-muted-foreground mt-1">
+                      <span>已還 {formatCurrency(m.paidPrincipal)} ({paidPct.toFixed(1)}%)</span>
+                      <span>原始 {formatCurrency(m.principal)}</span>
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
