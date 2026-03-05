@@ -17,9 +17,16 @@ interface Snapshot {
   updatedAt: string
 }
 
+let cachedSnapshot: Snapshot | null = null
+let cachedAt = 0
+const SNAPSHOT_TTL = 30_000
+
 function loadSnapshot(): Snapshot {
+  if (cachedSnapshot && Date.now() - cachedAt < SNAPSHOT_TTL) return cachedSnapshot
   const raw = readFileSync(path.join(process.cwd(), 'public', 'snapshot.json'), 'utf-8')
-  return JSON.parse(raw) as Snapshot
+  cachedSnapshot = JSON.parse(raw) as Snapshot
+  cachedAt = Date.now()
+  return cachedSnapshot
 }
 
 type CacheResult<T> = { data: T; stale: false } | { data: T; stale: true; updatedAt: string }
@@ -30,8 +37,12 @@ async function withFallback<T>(liveFn: () => Promise<T>, snapshotKey: keyof Snap
     return { data, stale: false }
   } catch (e) {
     console.warn(`[cache] live read failed for ${snapshotKey}, falling back to snapshot:`, (e as Error).message)
-    const snap = loadSnapshot()
-    return { data: snap[snapshotKey] as T, stale: true, updatedAt: snap.updatedAt }
+    try {
+      const snap = loadSnapshot()
+      return { data: snap[snapshotKey] as T, stale: true, updatedAt: snap.updatedAt }
+    } catch {
+      throw new Error(`Both live read and snapshot fallback failed for ${snapshotKey}`)
+    }
   }
 }
 
