@@ -8,15 +8,19 @@ import { revalidatePath } from 'next/cache'
 export const revalidate = 600
 
 export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url)
-  const limit = searchParams.get('limit') ? Number(searchParams.get('limit')) : undefined
+  try {
+    const { searchParams } = new URL(request.url)
+    const limit = searchParams.get('limit') ? Number(searchParams.get('limit')) : undefined
 
-  const result = await getTransactions(limit)
-  return NextResponse.json({
-    data: result.data,
-    updatedAt: result.stale ? result.updatedAt : new Date().toISOString(),
-    ...(result.stale && { stale: true }),
-  })
+    const result = await getTransactions(limit)
+    return NextResponse.json({
+      data: result.data,
+      updatedAt: result.stale ? result.updatedAt : new Date().toISOString(),
+      ...(result.stale && { stale: true }),
+    })
+  } catch {
+    return NextResponse.json({ error: 'No data available', code: 'NO_DATA' }, { status: 503 })
+  }
 }
 
 export async function POST(request: Request) {
