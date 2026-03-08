@@ -1,5 +1,5 @@
 import { formatCurrency } from '@/lib/utils'
-import { getBalanceSheet, getMortgages } from '@/lib/sheets/reader'
+import { getBalanceSheet, getMortgages } from '@/lib/snapshot-reader'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { ErrorState } from '@/components/ErrorState'
 

@@ -1,5 +1,5 @@
 import { formatCurrency } from '@/lib/utils'
-import { getInsurance } from '@/lib/sheets/reader'
+import { getInsurance } from '@/lib/snapshot-reader'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { ErrorState } from '@/components/ErrorState'
 

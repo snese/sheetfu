@@ -1,4 +1,4 @@
-import { getDashboardSummary, getPortfolio, getTransactions, getHistory, getMortgages } from '@/lib/sheets/reader'
+import { getDashboardSummary, getPortfolio, getTransactions, getHistory, getMortgages } from '@/lib/snapshot-reader'
 import { DashboardClient } from '@/components/DashboardClient'
 import { ErrorState } from '@/components/ErrorState'
 

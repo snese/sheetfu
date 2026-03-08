@@ -11,8 +11,9 @@ export function middleware(request: NextRequest) {
 
   // All API routes require authentication (defense in depth behind CF Access)
   if (request.nextUrl.pathname.startsWith('/api/')) {
-    // Health endpoint is public for monitoring
+    // Health and revalidate endpoints are internal/public
     if (request.nextUrl.pathname === '/api/health') return NextResponse.next()
+    if (request.nextUrl.pathname === '/api/revalidate' && (request.headers.get('host') ?? '').startsWith('localhost')) return NextResponse.next()
 
     if (!email) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     if (ALLOWED_EMAILS.length && !ALLOWED_EMAILS.includes(email.toLowerCase())) {
