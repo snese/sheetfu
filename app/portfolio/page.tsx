@@ -1,5 +1,5 @@
 import { formatCurrency, formatPercent, formatPnl } from '@/lib/utils'
-import { getPortfolio, getDashboardSummary } from '@/lib/sheets/reader'
+import { getPortfolio, getDashboardSummary } from '@/lib/snapshot-reader'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { ErrorState } from '@/components/ErrorState'
 import { PortfolioCharts } from '@/components/PortfolioCharts'
